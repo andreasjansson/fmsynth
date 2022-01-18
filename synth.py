@@ -77,6 +77,16 @@ class Synth:
         net.carrier_fq.data = carrier_fq
         net.mod_fq.data = mod_fq
 
+        # remove clicks
+        n_fade = 100
+        out[:n_fade] *= np.repeat(np.linspace(0, 1, n_fade).reshape([-1, 1]), 2, axis=1)
+        out[-n_fade:] *= np.repeat(
+            np.linspace(1, 0, n_fade).reshape([-1, 1]), 2, axis=1
+        )
+
+        # normalize
+        out /= np.max(out)
+
         return out
 
 

@@ -49,8 +49,6 @@ class Predictor(cog.Predictor):
     @cog.input(
         "learning_rate",
         type=float,
-        min=0.001,
-        max=0.1,
         default=0.01,
         help="ADAM learning rate",
     )
