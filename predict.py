@@ -2,10 +2,9 @@
 # Reference: https://github.com/replicate/cog/blob/main/docs/python.md
 
 import os
-from pathlib import Path
 import tempfile
 import subprocess
-import cog
+from cog import BasePredictor, Path, Input
 import torch
 from scipy.io import wavfile
 import numpy as np
@@ -14,64 +13,36 @@ import librosa
 from synth import Synth
 
 
-class Predictor(cog.Predictor):
+class Predictor(BasePredictor):
     def setup(self):
         """Load the model into memory to make running multiple predictions efficient"""
         self.synth = Synth(torch.device("cuda"))
 
-    @cog.input("audio", type=cog.Path, help="Audio input file, max 5 seconds")
-    @cog.input(
-        "minimize_num_freqs",
-        type=bool,
-        default=False,
-        help="Minimize the number of active carrier and modulator frequencies",
-    )
-    @cog.input(
-        "carrier_stereo_detune",
-        type=float,
-        default=0.005,
-        help="Carrier frequency stereo detune",
-    )
-    @cog.input(
-        "mod_stereo_detune",
-        type=float,
-        default=0.01,
-        help="Modulator frequency stereo detune",
-    )
-    @cog.input(
-        "time_stretch",
-        type=float,
-        min=0.1,
-        max=5,
-        default=1,
-        help="Time stretch factor",
-    )
-    @cog.input(
-        "learning_rate",
-        type=float,
-        default=0.01,
-        help="ADAM learning rate",
-    )
-    @cog.input(
-        "n_iter",
-        type=int,
-        min=100,
-        max=5000,
-        default=1000,
-        help="Number of optimization iterations",
-    )
-    @cog.input("seed", type=int, default=-1, help="Random seed, -1 for random")
     def predict(
         self,
-        audio,
-        minimize_num_freqs,
-        carrier_stereo_detune,
-        mod_stereo_detune,
-        time_stretch,
-        learning_rate,
-        n_iter,
-        seed,
-    ):
+        audio: Path = Input(description="Audio input file, max 5 seconds"),
+        minimize_num_freqs: bool = Input(
+            description="Minimize the number of active carrier and modulator frequencies",
+            default=False,
+        ),
+        carrier_stereo_detune: float = Input(
+            description="Carrier frequency stereo detune", default=0.005
+        ),
+        mod_stereo_detune: float = Input(
+            description="Modulator frequency stereo detune", default=0.01
+        ),
+        time_stretch: float = Input(
+            description="Time stretch factor", ge=0.1, le=5, default=1
+        ),
+        learning_rate: float = Input(description="ADAM learning rate", default=0.01),
+        n_iter: int = Input(
+            description="Number of optimization iterations",
+            ge=100,
+            le=5000,
+            default=1000,
+        ),
+        seed: int = Input(description="Random seed, -1 for random", default=-1),
+    ) -> Path:
         """Run a single prediction on the model"""
         if seed < 0:
             seed = int.from_bytes(os.urandom(2), "big")
